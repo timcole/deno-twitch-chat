@@ -19,6 +19,11 @@ Currently only supports native Twitch Emotes
 - [ ] state saver so we can reopen last opened chats
 - [ ] Vim like status line w/ commands (currently only `:q` to quit)
 
+### Run
+```
+deno run --allow-net --allow-run=stty main.ts
+```
+
 ---
 
 ### Screenshots
