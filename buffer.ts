@@ -1,29 +1,34 @@
 import { Line } from './bufferLine.ts';
 
-export interface BufferOptions {
+export interface BufferCoords {
   x: number;
   y: number;
-  scroll: number;
 }
 
 export class Buffer {
   private lines: string[] = [];
-  private options: BufferOptions;
+  private scroll: number = 0;
+  private coords: BufferCoords;
 
   private size: { width: number; height: number };
 
   constructor(
     width: number,
     height: number,
-    options: BufferOptions = {
+    scroll: number = 0,
+    coords: BufferCoords = {
       x: 0,
       y: 0,
-      scroll: 0,
     }
   ) {
-    this.options = options;
+    this.coords = coords;
+    this.scroll = scroll;
     this.size = { width, height };
     this.lines.push(' '.repeat(this.width()));
+  }
+
+  public get lineHight(): number {
+    return this.lines.length;
   }
 
   public height(): number {
@@ -50,22 +55,29 @@ export class Buffer {
   }
 
   public async render(): Promise<void> {
+    // fill the remaining space with whitespace
     await this.fill();
+
+    if (this.scroll >= this.height()) this.scroll = this.height();
+    let start = this.lines.length - this.height() - this.scroll;
+    if (start < 0) start = 0;
+    let scrollBuffer: string[] = this.lines.splice(start, this.height());
+
     // Clear screen
     Deno.stdout.writeSync(new TextEncoder().encode(`\x1B[2J`));
 
     // Write buffer
-    this.lines.map((line) => {
+    scrollBuffer.map((line) => {
       Deno.stdout.writeSync(
         new TextEncoder().encode(
-          `\x1B[${this.options.y};${this.options.x}H${line}\n`
+          `\x1B[${this.coords.y};${this.coords.x}H${line}\n`
         )
       );
-      this.options.y++;
+      this.coords.y++;
     });
 
     Deno.stdout.writeSync(
-      new TextEncoder().encode(`\x1B[${this.options.y - 1};${this.options.x}H`)
+      new TextEncoder().encode(`\x1B[${this.coords.y - 1};${this.coords.x}H`)
     );
   }
 }
